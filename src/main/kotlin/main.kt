@@ -51,7 +51,7 @@ object SocialService : ChatService {
             existingChat.messages.add(newMessage) // Добавляем сообщение в список сообщений чата
             existingChat.messageIsRead = true     // Устанавливаем флаг непрочитанных сообщений для чата
         } else { // Если чат не найден, создаём новый
-            val newChat = Chat(
+        val newChat = Chat(
                 id = nextChatId++,
                 isDeleted = false,
                 messages = mutableListOf(newMessage), // Новое сообщение - первое в чате
@@ -66,8 +66,14 @@ object SocialService : ChatService {
     }
 
     override fun deleteMessage(messageId: Int): Boolean {
+        /*
+        предыдущая версия
         val allMessages = chatsList.flatMap { it.messages }
         val targetMessage = allMessages.find { it.messageId == messageId }
+         */
+        val targetMessage = chatsList.asSequence()
+            .flatMap { it.messages }
+            .find{ it.messageId == messageId}
 
         if (targetMessage != null) {
             targetMessage.isDeleted = true
@@ -77,8 +83,14 @@ object SocialService : ChatService {
     }
 
     override fun editMessage(messageId: Int, newText: String): Message {
+        /*
+        предыдущая версия
         val allMessages = chatsList.flatMap { it.messages }
         val targetMessage = allMessages.find { it.messageId == messageId }
+         */
+        val targetMessage = chatsList.asSequence()
+            .flatMap { it.messages }
+            .find { it.messageId == messageId }
 
         if (targetMessage != null && !targetMessage.isDeleted) {
             targetMessage.text = newText
@@ -93,19 +105,21 @@ object SocialService : ChatService {
         if (chatToDelete != null) {
             val hasActiveMessages = chatToDelete.messages.any { !it.isDeleted }
             if (hasActiveMessages) {
-                chatToDelete.isDeleted = true
-                return true
+                //chatToDelete.isDeleted = true
+                return chatToDelete.isDeleted
             } else {
-                chatsList.remove(chatToDelete)
-                return true
+                //chatsList.remove(chatToDelete)
+                return chatsList.remove(chatToDelete)
             }
         }
         return false
     }
 
     override fun getChats(): List<Chat> {
-        val existingChats = chatsList.filter { !it.isDeleted }
-        return existingChats
+        //val existingChats =
+            return chatsList.asSequence()
+                .filter { !it.isDeleted }.toList()
+        //return existingChats
     }
 
     override fun getMessages(senderId: Int, recipientId: Int, count: Int): List<Message> {
